@@ -4,21 +4,24 @@ on:
   push:
     paths:
       - '01-helloworld/**'
+      - '**helloworld.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - uses: actions/checkout@v3
-        with:
-          path: 01-helloworld
       - run: sudo apt-get update && sudo apt-get install libgtest-dev -y
-      - run: chmod a+x ./build-ci.sh
-      - name: Build project and run test
-        run: ./build-ci.sh "${  { github.run_number }}"
+      - name: Build and test
+        run: |
+          cd ./01-helloworld
+          ls -R ${{ github.workspace }}
+          chmod a+x ./build-ci.sh
+          ./build-ci.sh "${{ github.run_number }}"
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v2
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -33,6 +36,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/helloworld-0.0.${{ github.run_number }}-Linux.deb
+          asset_path: ./01-helloworld/build/helloworld-0.0.${{ github.run_number }}-Linux.deb
           asset_name: helloworld-0.0.${{ github.run_number }}-Linux.deb
           asset_content_type: application/vnd.debian.binary-package
