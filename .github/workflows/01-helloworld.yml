@@ -3,8 +3,7 @@ name: 'helloworld CI'
 on:
   push:
     paths:
-      - '01-helloworld/**'
-      - '**helloworld.yml'
+      - '**helloworld/**'
 
 jobs:
   build:
