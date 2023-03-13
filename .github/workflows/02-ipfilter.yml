@@ -1,0 +1,39 @@
+name: 'ipfilter CI'
+
+on:
+  push:
+    paths:
+      - '**ipfilter/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and test
+        run: |
+          cd ./02-ipfilter
+          # ls -R ${{ github.workspace }}
+          chmod a+x ./build-ci.sh
+          ./build-ci.sh "${{ github.run_number }}"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./02-ipfilter/build/ipfilter-0.0.${{ github.run_number }}-Linux.deb
+          asset_name: ipfilter-0.0.${{ github.run_number }}-Linux.deb
+          asset_content_type: application/vnd.debian.binary-package
