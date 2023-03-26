@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -11,29 +12,30 @@ public:
         FIRST,
         SECOND,
         THIRD,
-        FOURTH
+        FOURTH,
+        PART_COUNT
     };
 
     explicit IpAddress(std::string&& address);
 
-    [[nodiscard]] int first() const { return address_[AddressPart::FIRST]; }
-    [[nodiscard]] int second() const { return address_[AddressPart::SECOND]; }
-    [[nodiscard]] int third() const { return address_[AddressPart::THIRD]; }
-    [[nodiscard]] int fourth() const { return address_[AddressPart::FOURTH]; }
+    [[nodiscard]] uint8_t first() const { return address_[AddressPart::FIRST]; }
+    [[nodiscard]] uint8_t second() const { return address_[AddressPart::SECOND]; }
+    [[nodiscard]] uint8_t third() const { return address_[AddressPart::THIRD]; }
+    [[nodiscard]] uint8_t fourth() const { return address_[AddressPart::FOURTH]; }
 
-    [[nodiscard]] int part(AddressPart) const;
-protected:
-    IpAddress(uint16_t f, uint16_t s, uint16_t t, uint16_t fh);
+    [[nodiscard]] uint8_t part(AddressPart) const;
 
 private:
-    int address_[FOURTH + 1];
+    std::array<uint8_t, PART_COUNT> address_;
+
+    friend bool operator<(const IpAddress& l, const IpAddress& r);
 };
 
 std::ostream& operator<<(std::ostream& out, const IpAddress&);
 bool operator<(const IpAddress& l, const IpAddress& r);
 bool operator>(const IpAddress& l, const IpAddress& r);
 
-class IpAddressFilter : private IpAddress
+class IpAddressFilter
 {
 public:
     enum
@@ -48,6 +50,7 @@ public:
 private:
     size_t count_;
     bool oneOf_;
+    std::array<uint16_t, IpAddress::PART_COUNT> filter_;
 };
 
 class IpAddressContainer

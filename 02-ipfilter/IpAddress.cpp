@@ -11,7 +11,7 @@ IpAddress::IpAddress(std::string&& address)
     std::istringstream strStream(std::move(address));
     int i = 0;
     for (std::string num; std::getline(strStream, num, '.'); ++i) {
-        if (i <= FOURTH) {
+        if (i < PART_COUNT) {
             address_[i] = std::stoi(num);
         }
         else {
@@ -22,29 +22,12 @@ IpAddress::IpAddress(std::string&& address)
 
 std::ostream& operator<<(std::ostream& out, const IpAddress& address)
 {
-    return out << address.first() << '.' << address.second() << '.' << address.third() << '.' << address.fourth();
+    return out << (uint16_t)address.first() << '.' << (uint16_t)address.second() << '.' << (uint16_t)address.third() << '.' << (uint16_t)address.fourth();
 }
 
 bool operator<(const IpAddress& l, const IpAddress& r)
 {
-    if (l.first() < r.first()) {
-        return true;
-    }
-    if (l.first() == r.first()) {
-        if (l.second() < r.second()) {
-            return true;
-        }
-        if (l.second() == r.second()) {
-            if (l.third() < r.third()) {
-                return true;
-            }
-            if (l.third() == r.third()) {
-                return l.fourth() < r.fourth();
-            }
-        }
-    }
-
-    return false;
+    return l.address_ < r.address_;
 }
 
 bool operator>(const IpAddress& l, const IpAddress& r)
@@ -52,23 +35,18 @@ bool operator>(const IpAddress& l, const IpAddress& r)
     return r < l;
 }
 
-IpAddress::IpAddress(uint16_t f, uint16_t s, uint16_t t, uint16_t fh)
-    : address_{ f, s, t, fh }
-{
-}
-
-int IpAddress::part(IpAddress::AddressPart p) const
+uint8_t IpAddress::part(IpAddress::AddressPart p) const
 {
     return address_[p];
 }
 
 IpAddressFilter::IpAddressFilter(uint16_t f, uint16_t s, uint16_t t, uint16_t fh, bool oneOf)
-    : IpAddress(f, s, t, fh)
-    , count_(AddressPart::FOURTH + 1)
+    : count_(IpAddress::PART_COUNT)
     , oneOf_(oneOf)
+    , filter_{ f, s, t, fh }
 {
-    for (size_t i = 0; i <= AddressPart::FOURTH; ++i) {
-        if (NOT_SET == part(static_cast<AddressPart>(i))) {
+    for (size_t i = 0; i < IpAddress::PART_COUNT; ++i) {
+        if (NOT_SET == filter_[i]) {
             --count_;
         }
     }
@@ -77,8 +55,8 @@ IpAddressFilter::IpAddressFilter(uint16_t f, uint16_t s, uint16_t t, uint16_t fh
 bool IpAddressFilter::isMatch(const IpAddress& address) const
 {
     for (size_t i = 0; i < count_; ++i) {
-        auto p = static_cast<AddressPart>(i);
-        if (address.part(p) != part(p)) {
+        auto p = static_cast<IpAddress::AddressPart>(i);
+        if (address.part(p) != filter_[i]) {
             if (!oneOf_) {
                 return false;
             }
